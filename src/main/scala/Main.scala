@@ -13,20 +13,20 @@ object Main {
   }
 
   def benchIncr {
-    val title = "Incr"
-    val akkaTitle = "Akka"
-    val stdTitle = "Std"
-    val results = List(100000,10000,1000,100,10).flatMap(i => List(new AkkaIncrBench(i), new StdIncrBench(i))).map(_.result)
-    val grouped = results.grouped(2).toList
-    val (maxTitle, maxAkka, maxStd) = grouped.foldLeft((title.length,akkaTitle.length,stdTitle.length)){
-      case ((l1, l2, l3), List(a, s)) => (l1 max a.iterations.toString.length, l2 max a.perSec.toInt.toString.length, l3 max s.perSec.toInt.toString.length)
-    }
-    val formatStr = "%-"+maxTitle+"."+maxTitle+"s | %"+maxAkka+"."+maxAkka+"s  %"+maxStd+"."+maxStd+"s"
-    println(formatStr format (title, akkaTitle, stdTitle))
-    println(formatStr format ("-" * maxTitle, "-" * maxAkka, "-" * maxStd))
-    grouped.foreach {
-      case List(a,s) => println(formatStr format (a.iterations.toString, a.perSec.toInt.toString, s.perSec.toInt.toString))
-    }
+    printTable(List("Incr (req/s)", "Akka (!)", "Standard") :: List(100000,10000,1000,100,10).map(i => List(i, (new AkkaIncrBench(i)).result.perSec, (new StdIncrBench(i)).result.perSec).map(_.toInt.toString)))
+  }
+
+  def printTable(data: Seq[Seq[String]]) {
+    val cols = data.foldLeft(0){ case (m, row) => m max row.length }
+    val maxWidths = data.foldLeft(List.fill(cols)(0)){ case (ml, row) => ml.zipAll(row, "", "").map{ case (m: Int, s: String) => m max s.length } }
+    val formatStr = maxWidths.tail.foldLeft("  %"+maxWidths.head+"s  |"){ case (s, m) => s+"  %"+m+"s  "}
+    val divider = maxWidths.tail.foldLeft(" "+("-"*(maxWidths.head+2))+" |"){case (s, m) => s+" "+("-"*(m+2))+" "}
+    println(divider)
+    println(formatStr format (data.head: _*))
+    println(divider)
+    data.tail.foreach(row => println(formatStr format (row.padTo(cols, ""): _*)))
+    println(divider)
+    println("")
   }
 }
 
