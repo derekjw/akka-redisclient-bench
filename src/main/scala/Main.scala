@@ -7,10 +7,17 @@ object Main {
   
   def main(args: Array[String]) {
 
+    warmup
+
     benchIncr
     benchList
 
     Clients.stop
+  }
+
+  // Only Akka seems to benefit from warmup, the others take too long anyways
+  def warmup {
+    (new AkkaIncrBench(100000)).result
   }
 
   def benchIncr {
