@@ -2,7 +2,9 @@ Comparing performance of my akka-redisclient, my rewritten scala-redis,
 and the current version of scala-redis included with Akka.
 
 Only two tests so far, and they are both tests that really take advantage
-of the concurrency Akka provides. Need better statistics, latency, etc.
+of the concurrency Akka provides. Also, I'm only doing a single test run
+for each test, causing the numbers to sometimes vary wildly. Need better
+statistics, latency, etc.
 
 These are my latest scores, run on a Linode 1536 VPS instance. The benchmark
 included with Redis gets ~40,000 req/s for single commands (my list benchmark
