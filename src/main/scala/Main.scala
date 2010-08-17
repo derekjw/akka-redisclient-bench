@@ -8,12 +8,23 @@ object Main {
   def main(args: Array[String]) {
 
     benchIncr
+    benchList
 
     Clients.stop
   }
 
   def benchIncr {
-    printTable(List("Incr (req/s)", "Akka (!)", "Standard") :: List(100000,10000,1000,100,10).map(i => List(i, (new AkkaIncrBench(i)).result.perSec, (new StdIncrBench(i)).result.perSec).map(_.toInt.toString)))
+    printTable(List("incr (req/s)", "Akka", "Standard", "Old") :: List(100000,10000,1000,100,10).map{
+      i => List(i, (new AkkaIncrBench(i)).result.perSec,
+                   (new StdIncrBench(i)).result.perSec,
+                   (new OldIncrBench(i)).result.perSec).map(_.toInt.toString)})
+  }
+
+  def benchList {
+    printTable(List("list (req/s)", "Akka", "Standard", "Old") :: List(100000,10000,1000,100,10).map{
+      i => List(i, (new AkkaListBench(i)).result.perSec,
+                   (new StdListBench(i)).result.perSec,
+                   (new OldListBench(i)).result.perSec).map(_.toInt.toString)})
   }
 
   def printTable(data: Seq[Seq[String]]) {
@@ -33,10 +44,12 @@ object Main {
 object Clients {
   implicit val akkaRedisClient: AkkaRedisClient = new AkkaRedisClient("localhost", 16379)
   implicit val redisClient: RedisClient = new RedisClient("localhost", 16379)
+  implicit val oldRedisClient: com.redis.RedisClient = new com.redis.RedisClient("localhost", 16379)
 
   def stop {
     akkaRedisClient.stop
     redisClient.disconnect
+    oldRedisClient.disconnect
   }
 }
 

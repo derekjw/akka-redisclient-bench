@@ -34,3 +34,16 @@ class StdIncrBench(iterations: Long)(implicit conn: RedisClient) extends BenchIt
     assert (fromBytes((conn send get(key)).get).toLong == iterations)
   }
 }
+
+class OldIncrBench(iterations: Long)(implicit conn: com.redis.RedisClient) extends BenchIterations(iterations) {
+  val key = "old-incrbench"
+
+  override def before { conn.flushdb }
+  override def after { conn.flushdb }
+
+  def run = {
+    conn.set(key, "0")
+    iterate { i => conn.incr(key) }
+    assert (((conn.get(key)).get).toLong == iterations)
+  }
+}
