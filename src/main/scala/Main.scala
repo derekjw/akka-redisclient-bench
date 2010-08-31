@@ -18,18 +18,21 @@ object Main {
   // Only Akka seems to benefit from warmup, the others take too long anyways
   def warmup {
     (new AkkaIncrBench(100000)).result
+    (new AkkaWorkerIncrBench(100000)).result
   }
 
   def benchIncr {
-    printTable(List("incr (req/s)", "Akka", "Standard", "Old") :: List(100000,10000,1000,100,10).map{
+    printTable(List("incr (req/s)", "Akka Pipeline", "Akka Workers", "Standard", "Old") :: List(100000,10000,1000,100,10).map{
       i => List(i, (new AkkaIncrBench(i)).result.perSec,
+                   (new AkkaWorkerIncrBench(i)).result.perSec,
                    (new StdIncrBench(i)).result.perSec,
                    (new OldIncrBench(i)).result.perSec).map(_.toInt.toString)})
   }
 
   def benchList {
-    printTable(List("list (req/s)", "Akka", "Standard", "Old") :: List(100000,10000,1000,100,10).map{
+    printTable(List("list (req/s)", "Akka Pipeline", "Akka Workers", "Standard", "Old") :: List(100000,10000,1000,100,10).map{
       i => List(i, (new AkkaListBench(i)).result.perSec,
+                   (new AkkaWorkerListBench(i)).result.perSec,
                    (new StdListBench(i)).result.perSec,
                    (new OldListBench(i)).result.perSec).map(_.toInt.toString)})
   }
@@ -50,11 +53,13 @@ object Main {
 
 object Clients {
   implicit val akkaRedisClient: AkkaRedisClient = new AkkaRedisClient("localhost", 16379)
+  implicit val akkaRedisWorkerPool: AkkaRedisWorkerPool = new AkkaRedisWorkerPool("localhost", 16379, size = 4)
   implicit val redisClient: RedisClient = new RedisClient("localhost", 16379)
   implicit val oldRedisClient: com.redis.RedisClient = new com.redis.RedisClient("localhost", 16379)
 
   def stop {
     akkaRedisClient.stop
+    akkaRedisWorkerPool.stop
     redisClient.disconnect
     oldRedisClient.disconnect
   }

@@ -30,6 +30,20 @@ class AkkaListBench(iterations: Long)(implicit conn: AkkaRedisClient) extends Be
   }
 }
 
+class AkkaWorkerListBench(iterations: Long)(implicit conn: AkkaRedisWorkerPool) extends BenchIterations(iterations) with ListBench with StringImplicits {
+  val key = "worklistbench"
+
+  override def before { conn send flushdb }
+  override def after { conn send flushdb }
+
+  def run = {
+    (1 to iterations.toInt).map{ i => conn !!! rpush(key, testvals.next) }.foreach(_.await)
+    assert ((conn send llen(key)) == iterations)
+    (1 to iterations.toInt).map{ i => (conn !!! lpop(key))(_.map(fromBytes).get) }.foreach(x => assert(x.await.result.get == "bar"))
+    assert ((conn send llen(key)) == 0)
+  }
+}
+
 class StdListBench(iterations: Long)(implicit conn: RedisClient) extends BenchIterations(iterations) with ListBench with StringImplicits {
   val key = "std-listbench"
 
