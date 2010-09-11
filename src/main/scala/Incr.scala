@@ -47,7 +47,7 @@ class AkkaWorkerIncrBench(iterations: Long)(implicit conn: AkkaRedisWorkerPool) 
   def run = {
     conn ! set(key, 0L)
     val msg = incr(key)
-    (1 to iterations.toInt).map{ i => conn !!! msg }.foreach(_.await)
+    (1 to iterations.toInt).map{ i => conn !!! msg }.foreach(_.awaitBlocking)
     assert (((conn send get(key))(fromBytes)).get.toLong == iterations)
   }
 }
