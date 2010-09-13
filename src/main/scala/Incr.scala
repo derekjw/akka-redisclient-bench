@@ -51,7 +51,7 @@ class AkkaWorkerIncrBench(iterations: Long)(implicit conn: AkkaRedisWorkerPool) 
     assert (((conn send get(key))(fromBytes)).get.toLong == iterations)
   }
 }
-
+/*
 class OldIncrBench(iterations: Long)(implicit conn: com.redis.RedisClient) extends BenchIterations(iterations) {
   val key = "old-incrbench"
 
@@ -64,3 +64,4 @@ class OldIncrBench(iterations: Long)(implicit conn: com.redis.RedisClient) exten
     assert (((conn.get(key)).get).toLong == iterations)
   }
 }
+*/

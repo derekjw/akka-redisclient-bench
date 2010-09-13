@@ -57,7 +57,7 @@ class StdListBench(iterations: Long)(implicit conn: RedisClient) extends BenchIt
     assert (fromBytes((conn send llen(key))).toLong == 0)
   }
 }
-
+/*
 class OldListBench(iterations: Long)(implicit conn: com.redis.RedisClient) extends BenchIterations(iterations) with ListBench with StringImplicits {
   val key = "old-listbench"
 
@@ -71,3 +71,4 @@ class OldListBench(iterations: Long)(implicit conn: com.redis.RedisClient) exten
     assert (((conn.llen(key)).get).toLong == 0)
   }
 }
+*/
