@@ -2,7 +2,7 @@ package net.fyrie.redis
 package akka
 package bench
 
-import commands._
+import Commands._
 import net.fyrie.redis.akka.collection._
 
 class AkkaIncrBench(iterations: Long)(implicit conn: AkkaRedisClient) extends BenchIterations(iterations) {
@@ -21,8 +21,7 @@ class AkkaIncrBench(iterations: Long)(implicit conn: AkkaRedisClient) extends Be
 class StdIncrBench(iterations: Long)(implicit conn: RedisClient) extends BenchIterations(iterations) {
   val key = "std-incrbench"
 
-  implicit def toBytes(in: Any): Array[Byte] = in.toString.getBytes
-  implicit def fromBytes(in: Array[Byte]): String = new String(in)
+  import serialization.Parse.Implicits.parseLong
 
   override def before { conn send flushdb }
   override def after { conn send flushdb }
@@ -31,15 +30,14 @@ class StdIncrBench(iterations: Long)(implicit conn: RedisClient) extends BenchIt
     conn send set(key, 0L)
     val msg = incr(key)
     iterate { i => conn send msg }
-    assert (fromBytes((conn send get(key)).get).toLong == iterations)
+    assert ((conn send get(key)).get == iterations)
   }
 }
 
 class AkkaWorkerIncrBench(iterations: Long)(implicit conn: AkkaRedisWorkerPool) extends BenchIterations(iterations) {
   val key = "workincrbench"
 
-  implicit def toBytes(in: Any): Array[Byte] = in.toString.getBytes
-  implicit def fromBytes(in: Option[Array[Byte]]): Option[String] = in.map(new String(_))
+  import serialization.Parse.Implicits.parseLong
 
   override def before { conn send flushdb }
   override def after { conn send flushdb }
@@ -48,7 +46,7 @@ class AkkaWorkerIncrBench(iterations: Long)(implicit conn: AkkaRedisWorkerPool) 
     conn ! set(key, 0L)
     val msg = incr(key)
     (1 to iterations.toInt).map{ i => conn !!! msg }.foreach(_.awaitBlocking.result)
-    assert (((conn send get(key))(fromBytes)).get.toLong == iterations)
+    assert ((conn send get(key)).get == iterations)
   }
 }
 /*

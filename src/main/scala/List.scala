@@ -2,19 +2,14 @@ package net.fyrie.redis
 package akka
 package bench
 
-import commands._
+import Commands._
 import net.fyrie.redis.akka.collection._
-
-trait StringImplicits {
-  implicit def toBytes(in: Any): Array[Byte] = in.toString.getBytes
-  implicit def fromBytes(in: Array[Byte]): String = new String(in)
-}
 
 trait ListBench {
   val testvals = Iterator.continually("bar")
 }
 
-class AkkaListBench(iterations: Long)(implicit conn: AkkaRedisClient) extends BenchIterations(iterations) with ListBench with StringImplicits {
+class AkkaListBench(iterations: Long)(implicit conn: AkkaRedisClient) extends BenchIterations(iterations) with ListBench {
   val key = "akkalistbench"
 
   override def before { conn send flushdb }
@@ -30,7 +25,7 @@ class AkkaListBench(iterations: Long)(implicit conn: AkkaRedisClient) extends Be
   }
 }
 
-class AkkaWorkerListBench(iterations: Long)(implicit conn: AkkaRedisWorkerPool) extends BenchIterations(iterations) with ListBench with StringImplicits {
+class AkkaWorkerListBench(iterations: Long)(implicit conn: AkkaRedisWorkerPool) extends BenchIterations(iterations) with ListBench {
   val key = "worklistbench"
 
   override def before { conn send flushdb }
@@ -39,12 +34,12 @@ class AkkaWorkerListBench(iterations: Long)(implicit conn: AkkaRedisWorkerPool) 
   def run = {
     (1 to iterations.toInt).map{ i => conn !!! rpush(key, testvals.next) }.foreach(_.await)
     assert ((conn send llen(key)) == iterations)
-    (1 to iterations.toInt).map{ i => (conn !!! lpop(key))(_.map(fromBytes).get) }.foreach(x => assert(x.await.result.get == "bar"))
+    (1 to iterations.toInt).map{ i => conn !!! lpop(key) }.foreach(x => assert(x.await.result.get.get == "bar"))
     assert ((conn send llen(key)) == 0)
   }
 }
 
-class StdListBench(iterations: Long)(implicit conn: RedisClient) extends BenchIterations(iterations) with ListBench with StringImplicits {
+class StdListBench(iterations: Long)(implicit conn: RedisClient) extends BenchIterations(iterations) with ListBench {
   val key = "std-listbench"
 
   override def before { conn send flushdb }
@@ -52,9 +47,9 @@ class StdListBench(iterations: Long)(implicit conn: RedisClient) extends BenchIt
 
   def run = {
     iterate { i => conn send rpush(key, testvals.next) }
-    assert (fromBytes((conn send llen(key))).toLong == iterations)
-    iterate { i => assert(fromBytes((conn send lpop(key)).get) == "bar") }
-    assert (fromBytes((conn send llen(key))).toLong == 0)
+    assert ((conn send llen(key)) == iterations)
+    iterate { i => assert((conn send lpop(key)).get == "bar") }
+    assert ((conn send llen(key)) == 0)
   }
 }
 /*
