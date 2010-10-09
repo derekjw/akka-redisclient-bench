@@ -5,7 +5,7 @@ package bench
 import Commands._
 import net.fyrie.redis.akka.collection._
 
-class AkkaIncrBench(iterations: Long)(implicit conn: AkkaRedisClient) extends BenchIterations(iterations) {
+class AkkaIncrBench(iterations: Int)(implicit conn: AkkaRedisClient) extends BenchIterations(iterations) {
   val key = "akkaincrbench"
 
   override def before { conn send flushdb }
@@ -18,7 +18,7 @@ class AkkaIncrBench(iterations: Long)(implicit conn: AkkaRedisClient) extends Be
   }
 }
 
-class StdIncrBench(iterations: Long)(implicit conn: RedisClient) extends BenchIterations(iterations) {
+class StdIncrBench(iterations: Int)(implicit conn: RedisClient) extends BenchIterations(iterations) {
   val key = "std-incrbench"
 
   import serialization.Parse.Implicits.parseLong
@@ -34,7 +34,7 @@ class StdIncrBench(iterations: Long)(implicit conn: RedisClient) extends BenchIt
   }
 }
 
-class AkkaWorkerIncrBench(iterations: Long)(implicit conn: AkkaRedisWorkerPool) extends BenchIterations(iterations) {
+class AkkaWorkerIncrBench(iterations: Int)(implicit conn: AkkaRedisWorkerPool) extends BenchIterations(iterations) {
   val key = "workincrbench"
 
   import serialization.Parse.Implicits.parseLong
@@ -45,7 +45,7 @@ class AkkaWorkerIncrBench(iterations: Long)(implicit conn: AkkaRedisWorkerPool) 
   def run = {
     conn ! set(key, 0L)
     val msg = incr(key)
-    (1 to iterations.toInt).map{ i => conn !!! msg }.foreach(_.awaitBlocking.result)
+    (1 to iterations).map{ i => conn !!! msg }.foreach(_.awaitBlocking.result)
     assert ((conn send get(key)).get == iterations)
   }
 }

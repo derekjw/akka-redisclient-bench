@@ -2,6 +2,8 @@ package net.fyrie.redis
 package akka
 package bench
 
+import se.scalablesolutions.akka.dispatch.Dispatchers
+
 object Main {
   import Clients._
   
@@ -11,6 +13,7 @@ object Main {
 
     benchIncr
     benchList
+    benchHash
 
     Clients.stop
   }
@@ -18,18 +21,35 @@ object Main {
   // Only Akka seems to benefit from warmup, the others take too long anyways
   def warmup {
     (new AkkaIncrBench(100000)).result
+    println("Warm up: 1/4")
+    (new AkkaIncrBench(100000)(akkaRedisClientHawt)).result
+    println("Warm up: 2/4")
+    (new AkkaHashBench(10000)).result
+    println("Warm up: 3/4")
+    (new StdStreamHashBench(10000)).result
+    println("Warm up: 4/4, Done!")
   }
 
   def benchIncr {
-    printTable(List("incr (req/s)", "Akka Pipeline", "Standard") :: List(100000,10000,1000,100,10).map{
+    printTable(List("incr (req/s)", "Akka Pipeline", "Akka w/ Hawt", "Standard") :: List(10000,1000,100,10,1).map{
       i => List(i, (new AkkaIncrBench(i)).result.perSec,
+                   (new AkkaIncrBench(i))(akkaRedisClientHawt).result.perSec,
                    (new StdIncrBench(i)).result.perSec).map(_.toInt.toString)})
   }
 
   def benchList {
-    printTable(List("list (req/s)", "Akka Pipeline", "Standard") :: List(100000,10000,1000,100,10).map{
+    printTable(List("list (req/s)", "Akka Pipeline", "Akka w/ Hawt", "Standard") :: List(10000,1000,100,10,1).map{
       i => List(i, (new AkkaListBench(i)).result.perSec,
+                   (new AkkaListBench(i))(akkaRedisClientHawt).result.perSec,
                    (new StdListBench(i)).result.perSec).map(_.toInt.toString)})
+  }
+
+  def benchHash {
+    printTable(List("hash / sort", "Akka Pipeline", "Akka w/ Hawt", "Standard", "Std Stream") :: List(10000,1000,100,10,1).map{
+      i => List(i, (new AkkaHashBench(i)).result.perSec,
+                   (new AkkaHashBench(i))(akkaRedisClientHawt).result.perSec,
+                   (new StdHashBench(i)).result.perSec,
+                   (new StdStreamHashBench(i)).result.perSec).map(_.toInt.toString)})
   }
 
   def printTable(data: Seq[Seq[String]]) {
@@ -48,10 +68,12 @@ object Main {
 
 object Clients {
   implicit val akkaRedisClient: AkkaRedisClient = new AkkaRedisClient("localhost", 16379)
+  val akkaRedisClientHawt: AkkaRedisClient = new AkkaRedisClient("localhost", 16379)(Dispatchers.newHawtDispatcher(false))
   implicit val redisClient: RedisClient = new RedisClient("localhost", 16379)
 
   def stop {
     akkaRedisClient.stop
+    akkaRedisClientHawt.stop
     redisClient.disconnect
   }
 }
@@ -75,12 +97,12 @@ trait Bench[T <: Result] {
   def result: T
 }
 
-abstract class BenchIterations(iterations: Long) extends Bench[BenchIterResult] {
+abstract class BenchIterations(iterations: Int) extends Bench[BenchIterResult] {
 
-  def iterate(f: (Long) => Unit): Unit = {
-    var i = 0L
+  def iterate(f: (Int) => Unit): Unit = {
+    var i = 0
     while (i < iterations) {
-      i += 1L
+      i += 1
       f(i)
     }
   }
@@ -88,7 +110,7 @@ abstract class BenchIterations(iterations: Long) extends Bench[BenchIterResult] 
   def result = BenchIterResult(this.execute, iterations)
 }
 
-case class BenchIterResult(nanos: Long, iterations: Long) extends Result {
+case class BenchIterResult(nanos: Long, iterations: Int) extends Result {
   def perSec = iterations / seconds
   def millis = nanos / 1000000.0
   def seconds = nanos / 1000000000.0

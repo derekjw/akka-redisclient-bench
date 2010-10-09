@@ -9,7 +9,7 @@ trait ListBench {
   val testvals = Iterator.continually("bar")
 }
 
-class AkkaListBench(iterations: Long)(implicit conn: AkkaRedisClient) extends BenchIterations(iterations) with ListBench {
+class AkkaListBench(iterations: Int)(implicit conn: AkkaRedisClient) extends BenchIterations(iterations) with ListBench {
   val key = "akkalistbench"
 
   override def before { conn send flushdb }
@@ -19,13 +19,13 @@ class AkkaListBench(iterations: Long)(implicit conn: AkkaRedisClient) extends Be
     val n = RedisList[String](key)
     iterate { i => n += testvals.next }
     assert (n.length == iterations) // remove this line for even more performance
-    val futures = (1L to iterations).map(i => n.lpopFuture)
+    val futures = (1 to iterations).map(i => n.lpopFuture)
     futures.foreach(f => assert(f.await.result.get.get == "bar"))
     assert (n.length == 0)
   }
 }
 
-class AkkaWorkerListBench(iterations: Long)(implicit conn: AkkaRedisWorkerPool) extends BenchIterations(iterations) with ListBench {
+class AkkaWorkerListBench(iterations: Int)(implicit conn: AkkaRedisWorkerPool) extends BenchIterations(iterations) with ListBench {
   val key = "worklistbench"
 
   override def before { conn send flushdb }
@@ -39,7 +39,7 @@ class AkkaWorkerListBench(iterations: Long)(implicit conn: AkkaRedisWorkerPool) 
   }
 }
 
-class StdListBench(iterations: Long)(implicit conn: RedisClient) extends BenchIterations(iterations) with ListBench {
+class StdListBench(iterations: Int)(implicit conn: RedisClient) extends BenchIterations(iterations) with ListBench {
   val key = "std-listbench"
 
   override def before { conn send flushdb }

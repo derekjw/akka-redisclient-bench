@@ -1,7 +1,7 @@
 import sbt._
 import sbt.CompileOrder._
 
-class AkkaRedisClientBenchProject(info: ProjectInfo) extends DefaultProject(info) with AkkaProject
+class AkkaRedisClientBenchProject(info: ProjectInfo) extends DefaultProject(info) with AkkaBaseProject
 {
   override def compileOptions = Optimize :: Unchecked :: super.compileOptions.toList
 
