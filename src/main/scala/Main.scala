@@ -31,14 +31,14 @@ object Main {
   }
 
   def benchIncr {
-    printTable(List("incr (req/s)", "Akka Pipeline", "Akka w/ Hawt", "Standard") :: List(10000,1000,100,10,1).map{
+    printTable(List("incr (req/s)", "Akka Pipeline", "Akka w/ Hawt", "Standard") :: List(100000, 10000,1000,100,10,1).map{
       i => List(i, (new AkkaIncrBench(i)).result.perSec,
                    (new AkkaIncrBench(i))(akkaRedisClientHawt).result.perSec,
                    (new StdIncrBench(i)).result.perSec).map(_.toInt.toString)})
   }
 
   def benchList {
-    printTable(List("list (req/s)", "Akka Pipeline", "Akka w/ Hawt", "Standard") :: List(10000,1000,100,10,1).map{
+    printTable(List("list (req/s)", "Akka Pipeline", "Akka w/ Hawt", "Standard") :: List(100000, 10000,1000,100,10,1).map{
       i => List(i, (new AkkaListBench(i)).result.perSec,
                    (new AkkaListBench(i))(akkaRedisClientHawt).result.perSec,
                    (new StdListBench(i)).result.perSec).map(_.toInt.toString)})
