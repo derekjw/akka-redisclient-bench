@@ -1,9 +1,7 @@
 package net.fyrie.redis
-package akka
 package bench
 
 import Commands._
-import net.fyrie.redis.akka.collection._
 
 object TestData {
   def rot(n: Int, s: String): String =
@@ -40,7 +38,7 @@ trait HashBench {
   def testvalstream = Stream.iterate(1)(1 + _).map(TestData.gen)
 }
 
-class AkkaHashBench(iterations: Int)(implicit conn: AkkaRedisClient) extends BenchIterations(iterations) with HashBench {
+class AkkaHashBench(iterations: Int)(implicit conn: RedisClient) extends BenchIterations(iterations) with HashBench {
   import serialization.Parse.Implicits._
 
   val key = "akkahashbench"
@@ -59,68 +57,6 @@ class AkkaHashBench(iterations: Int)(implicit conn: AkkaRedisClient) extends Ben
       by = Some("*->rank")) map { _.collect{
       case (Some(k), Some(r), Some(t), ot, Some(i), oi, Some(d), od) => TestData(k, r, t, ot, i, oi, d, od)
     }} getOrElse (Stream.empty)
-    assert (result.force == testvals.force)
+    assert (result.take(100).force == testvals.take(100).force)
   }
 }
-
-class StdHashBench(iterations: Int)(implicit conn: RedisClient) extends BenchIterations(iterations) with HashBench {
-  import serialization.Parse.Implicits._
-
-  val key = "std-hashbench"
-
-  override def before { conn send flushdb }
-  override def after { conn send flushdb }
-
-  val testvals = testvalstream.take(iterations)
-
-  def run = {
-    testvals foreach ( t => conn send multiexec(Seq(hmset(t.key, t.toMap), sadd(key, t.key))))
-    assert ((conn send scard(key)) == iterations)
-    val result = conn send sort8[String, Int, String, String, Int, Int, Double, Double](
-      key,
-      get = ("#", "*->rank", "*->text", "*->otext", "*->integer", "*->ointeger", "*->decimal", "*->odecimal"),
-      by = Some("*->rank")) map { _.collect{
-      case (Some(k), Some(r), Some(t), ot, Some(i), oi, Some(d), od) => TestData(k, r, t, ot, i, oi, d, od)
-    }} getOrElse (Stream.empty)
-    assert (result.force == testvals.force)
-  }
-}
-
-class StdStreamHashBench(iterations: Int)(implicit conn: RedisClient) extends BenchIterations(iterations) with HashBench {
-  import serialization.Parse.Implicits._
-
-  val key = "stdmhashbench"
-
-  override def before { conn send flushdb }
-  override def after { conn send flushdb }
-
-  val testvals = testvalstream.take(iterations)
-
-  def run = {
-    conn send multiexec(testvals flatMap ( t => Seq(hmset(t.key, t.toMap), sadd(key, t.key))))
-    assert ((conn send scard(key)) == iterations)
-    val result = conn send sort8[String, Int, String, String, Int, Int, Double, Double](
-      key,
-      get = ("#", "*->rank", "*->text", "*->otext", "*->integer", "*->ointeger", "*->decimal", "*->odecimal"),
-      by = Some("*->rank")) map { _.collect{
-      case (Some(k), Some(r), Some(t), ot, Some(i), oi, Some(d), od) => TestData(k, r, t, ot, i, oi, d, od)
-    }} getOrElse (Stream.empty)
-    assert (result.force == testvals.force)
-  }
-}
-
-/*
-class OldListBench(iterations: Long)(implicit conn: com.redis.RedisClient) extends BenchIterations(iterations) with ListBench with StringImplicits {
-  val key = "old-listbench"
-
-  override def before { conn.flushdb }
-  override def after { conn.flushdb }
-
-  def run = {
-    iterate { i => conn.rpush(key, testvals.next) }
-    assert (((conn.llen(key)).get).toLong == iterations)
-    iterate { i => assert((conn.lpop(key)).get == "bar") }
-    assert (((conn.llen(key)).get).toLong == 0)
-  }
-}
-*/
