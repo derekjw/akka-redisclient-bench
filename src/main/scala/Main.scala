@@ -55,7 +55,7 @@ object Main {
 }
 
 object Clients {
-  implicit val redisClient: RedisClient = new RedisClient("localhost", 16379)
+  implicit val redisClient: RedisClient = new RedisClient
 
   def stop {
     redisClient.stop
