@@ -13,6 +13,7 @@ object Main {
     benchIncr
     benchList
     benchHash
+    benchLatency
 
     Clients.stop
   }
@@ -25,8 +26,14 @@ object Main {
     println("Warm up: 2/2")
   }
 
+  def benchLatency {
+    printTable(List("latency", "Fyrie (10 clients)", "Fyrie (50 clients)") :: List(100000, 10000,1000).map{
+      i => List(i, (new AkkaLatencyBench(i, 10)).result.perSec,
+                   (new AkkaLatencyBench(i, 50)).result.perSec).map(_.toInt.toString)})
+  }
+
   def benchIncr {
-    printTable(List("incr (req/s)", "Fyrie Redis") :: List(100000, 10000,1000,100,10,1).map{
+    printTable(List("incr (req/s)", "Fyrie Redis") :: List(100000, 10000,1000,100,10,2).map{
       i => List(i, (new AkkaIncrBench(i)).result.perSec).map(_.toInt.toString)})
   }
 
@@ -36,8 +43,8 @@ object Main {
   }
 
   def benchHash {
-    printTable(List("hash / sort", "Fyrie Redis") :: List(10000,1000,100,10,1).map{
-      i => List(i, (new AkkaHashBench(i)).result.perSec).map(_.toInt.toString)})
+    printTable(List("sort (ms)", "Fyrie Redis") :: List(10000,1000,100).map{
+      i => List(i, (new AkkaHashBench(i)).result.millis).map(_.toInt.toString)})
   }
 
   def printTable(data: Seq[Seq[String]]) {
@@ -56,6 +63,7 @@ object Main {
 
 object Clients {
   implicit val redisClient: RedisClient = new RedisClient
+  redisClient.startStats()
 
   def stop {
     redisClient.stop

@@ -43,20 +43,28 @@ class AkkaHashBench(iterations: Int)(implicit conn: RedisClient) extends BenchIt
 
   val key = "akkahashbench"
 
-  override def before { conn send flushdb }
-  override def after { conn send flushdb }
+  override def before {
+    conn send flushdb
+    testvals foreach (t => conn ! multiexec(Seq(hmset(t.key, t.toMap), sadd(key, t.key))))
+    assert ((conn send scard(key)) == iterations)
+    conn.resetStats
+  }
+  override def after {
+    conn.printStats
+    conn send flushdb
+  }
 
   val testvals = testvalstream.take(iterations)
 
   def run = {
-    testvals foreach (t => conn ! multiexec(Seq(hmset(t.key, t.toMap), sadd(key, t.key))))
-    assert ((conn send scard(key)) == iterations)
     val result = conn send sort8[String, Int, String, String, Int, Int, Double, Double](
       key,
       get = ("#", "*->rank", "*->text", "*->otext", "*->integer", "*->ointeger", "*->decimal", "*->odecimal"),
-      by = Some("*->rank")) map { _.collect{
-      case (Some(k), Some(r), Some(t), ot, Some(i), oi, Some(d), od) => TestData(k, r, t, ot, i, oi, d, od)
+      by = Some("*->rank"),
+      limit = Some((0, 100))) map { _.flatMap{
+        case (Some(k), Some(r), Some(t), ot, Some(i), oi, Some(d), od) => Some(TestData(k, r, t, ot, i, oi, d, od))
+        case _ => None
     }} getOrElse (Stream.empty)
-    assert (result.take(100).force == testvals.take(100).force)
+    assert (result.take(10).force == testvals.take(10).force)
   }
 }
