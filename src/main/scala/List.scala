@@ -23,7 +23,7 @@ class AkkaListBench(iterations: Int)(implicit conn: RedisClient) extends BenchIt
     iterate { i => conn ! rpush(key, testvals.next) }
     assert ((conn send llen(key)) == iterations)
     //iterate { i => conn ! lpop(key) }
-    (1 to iterations).map{ i => conn !!! lpop(key) }.foreach(x => assert(x.await.result.get.get.get == "bar"))
+    (1 to iterations).map{ i => conn !!! lpop(key) }.foreach(x => assert(x.await.result.get.get == "bar"))
     assert ((conn send llen(key)) == 0)
   }
 }
