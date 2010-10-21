@@ -12,10 +12,8 @@ class AkkaLatencyBench(iterations: Int, connections: Int)(implicit conn: RedisCl
   override def before {
     conn send flushdb
     conn send set(key, 0)
-    conn.resetStats
   }
   override def after {
-    conn.printStats
     conn send flushdb
   }
 

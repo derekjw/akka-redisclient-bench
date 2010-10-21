@@ -47,10 +47,8 @@ class AkkaHashBench(iterations: Int)(implicit conn: RedisClient) extends BenchIt
     conn send flushdb
     testvals foreach (t => conn ! multiexec(Seq(hmset(t.key, t.toMap), sadd(key, t.key))))
     assert ((conn send scard(key)) == iterations)
-    conn.resetStats
   }
   override def after {
-    conn.printStats
     conn send flushdb
   }
 

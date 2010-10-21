@@ -9,10 +9,8 @@ class AkkaIncrBench(iterations: Int)(implicit conn: RedisClient) extends BenchIt
 
   override def before {
     conn send flushdb
-    conn.resetStats
   }
   override def after {
-    conn.printStats
     conn send flushdb
   }
 

@@ -27,7 +27,7 @@ object Main {
   }
 
   def benchLatency {
-    printTable(List("latency", "Fyrie (10 clients)", "Fyrie (50 clients)") :: List(100000, 10000,1000).map{
+    printTable(List("latency", "Fyrie (10 threads)", "Fyrie (50 threads)") :: List(100000, 10000,1000).map{
       i => List(i, (new AkkaLatencyBench(i, 10)).result.perSec,
                    (new AkkaLatencyBench(i, 50)).result.perSec).map(_.toInt.toString)})
   }
@@ -63,7 +63,6 @@ object Main {
 
 object Clients {
   implicit val redisClient: RedisClient = new RedisClient
-  redisClient.startStats()
 
   def stop {
     redisClient.stop
