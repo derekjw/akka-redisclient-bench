@@ -20,10 +20,12 @@ object Main {
 
   // Only Akka seems to benefit from warmup, the others take too long anyways
   def warmup {
-    (new AkkaIncrBench(100000)).result
-    println("Warm up: 1/2")
+    (new AkkaIncrBench(1000000)).result
+    println("Warm up: 1/3")
+    (new AkkaListBench(1000000)).result
+    println("Warm up: 2/3")
     (new AkkaHashBench(10000)).result
-    println("Warm up: 2/2")
+    println("Warm up: 3/3")
   }
 
   def benchLatency {
