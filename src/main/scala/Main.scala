@@ -68,6 +68,7 @@ object Clients {
 
   def stop {
     redisClient.stop
+    redisClient.shutdownWorkarounds
   }
 }
 
