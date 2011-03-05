@@ -9,7 +9,5 @@ class AkkaRedisClientBenchProject(info: ProjectInfo) extends DefaultProject(info
 
   val fyrieReleases           = "Fyrie releases" at "http://repo.fyrie.net/releases"
   val fyrieSnapshots          = "Fyrie snapshots" at "http://repo.fyrie.net/snapshots"
-  val scalaToolsSnapshots     = ScalaToolsSnapshots
 
-  val akkaModuleConfig        = ModuleConfiguration("se.scalablesolutions.akka", AkkaRepositories.AkkaRepo)
 }

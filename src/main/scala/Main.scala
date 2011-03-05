@@ -1,7 +1,7 @@
 package net.fyrie.redis
 package bench
 
-import se.scalablesolutions.akka.dispatch.Dispatchers
+import akka.dispatch.Dispatchers
 
 object Main {
   import Clients._

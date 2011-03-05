@@ -3,8 +3,8 @@ package bench
 
 import Commands._
 import serialization.Parse.Implicits._
-import se.scalablesolutions.akka.actor.Actor._
-import se.scalablesolutions.akka.dispatch._
+import akka.actor.Actor._
+import akka.dispatch._
 
 class AkkaLatencyBench(iterations: Int, connections: Int)(implicit conn: RedisClient) extends BenchIterations(iterations) {
   val key = "akkalatencybench"
