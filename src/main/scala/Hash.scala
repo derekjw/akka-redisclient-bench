@@ -1,4 +1,4 @@
-package net.fyrie.redis
+/*package net.fyrie.redis
 package bench
 
 import Commands._
@@ -66,3 +66,5 @@ class AkkaHashBench(iterations: Int)(implicit conn: RedisClient) extends BenchIt
     assert (result.take(10).force == testvals.take(10).force)
   }
 }
+
+*/

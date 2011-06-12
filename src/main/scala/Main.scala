@@ -1,8 +1,6 @@
 package net.fyrie.redis
 package bench
 
-import akka.dispatch.Dispatchers
-
 object Main {
   import Clients._
   
@@ -13,19 +11,19 @@ object Main {
     benchIncr
     benchList
     benchLatency
-    benchHash
+    //benchHash
 
     Clients.stop
   }
 
   // Only Akka seems to benefit from warmup, the others take too long anyways
   def warmup {
-    (new AkkaIncrBench(100000)).result
+    (new AkkaIncrBench(1000000)).result
     println("Warm up: 1/3")
     (new AkkaListBench(100000)).result
     println("Warm up: 2/3")
-    (new AkkaHashBench(10000)).result
-    println("Warm up: 3/3")
+/*    (new AkkaHashBench(10000)).result
+    println("Warm up: 3/3")*/
   }
 
   def benchLatency {
@@ -44,10 +42,10 @@ object Main {
       i => List(i, (new AkkaListBench(i)).result.perSec).map(_.toInt.toString)})
   }
 
-  def benchHash {
+/*  def benchHash {
     printTable(List("sort (ms)", "Fyrie Redis") :: List(10000,1000,100).map{
       i => List(i, (new AkkaHashBench(i)).result.millis).map(_.toInt.toString)})
-  }
+  }*/
 
   def printTable(data: Seq[Seq[String]]) {
     val cols = data.foldLeft(0){ case (m, row) => m max row.length }
@@ -64,11 +62,10 @@ object Main {
 }
 
 object Clients {
-  implicit val redisClient: RedisClient = new RedisClient
+  implicit val redisClient: RedisClient = new RedisClient(ioManager = akka.actor.Actor.actorOf(new akka.actor.IOManager(128000)).start)
 
   def stop {
-    redisClient.stop
-    redisClient.shutdownWorkarounds
+    akka.actor.Actor.registry.local.shutdownAll
   }
 }
 
