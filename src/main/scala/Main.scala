@@ -11,7 +11,7 @@ object Main {
     benchIncr
     benchList
     benchLatency
-    //benchHash
+    benchHash
 
     Clients.stop
   }
@@ -22,8 +22,8 @@ object Main {
     println("Warm up: 1/3")
     (new AkkaListBench(100000)).result
     println("Warm up: 2/3")
-/*    (new AkkaHashBench(10000)).result
-    println("Warm up: 3/3")*/
+    (new AkkaHashBench(10000)).result
+    println("Warm up: 3/3")
   }
 
   def benchLatency {
@@ -42,10 +42,10 @@ object Main {
       i => List(i, (new AkkaListBench(i)).result.perSec).map(_.toInt.toString)})
   }
 
-/*  def benchHash {
+  def benchHash {
     printTable(List("sort (ms)", "Fyrie Redis") :: List(10000,1000,100).map{
       i => List(i, (new AkkaHashBench(i)).result.millis).map(_.toInt.toString)})
-  }*/
+  }
 
   def printTable(data: Seq[Seq[String]]) {
     val cols = data.foldLeft(0){ case (m, row) => m max row.length }

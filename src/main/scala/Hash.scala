@@ -1,7 +1,8 @@
-/*package net.fyrie.redis
+package net.fyrie.redis
 package bench
 
-import Commands._
+import akka.util.ByteString
+import serialization.Store
 
 object TestData {
   def rot(n: Int, s: String): String =
@@ -25,13 +26,13 @@ object TestData {
 }
 
 case class TestData(key: String, rank: Int, text: String, otext: Option[String], integer: Int, ointeger: Option[Int], decimal: Double, odecimal: Option[Double]) {
-  def toMap: Map[String, Any] = Map("text" -> Some(text),
-                                    "otext" -> otext,
-                                    "integer" -> Some(integer),
-                                    "ointeger" -> ointeger,
-                                    "decimal" -> Some(decimal),
-                                    "odecimal" -> odecimal,
-                                    "rank" -> Some(rank)).collect{ case (k, Some(v)) => (k, v) }
+  def toMap: Map[String, ByteString] = Map("text" -> Some(Store(text)),
+                                           "otext" -> otext.map(Store(_)),
+                                           "integer" -> Some(Store(integer)),
+                                           "ointeger" -> ointeger.map(Store(_)),
+                                           "decimal" -> Some(Store(decimal)),
+                                           "odecimal" -> odecimal.map(Store(_)),
+                                           "rank" -> Some(Store(rank))).collect{ case (k, Some(v)) => (k, v) }
 }
 
 trait HashBench {
@@ -39,32 +40,32 @@ trait HashBench {
 }
 
 class AkkaHashBench(iterations: Int)(implicit conn: RedisClient) extends BenchIterations(iterations) with HashBench {
-  import serialization.Parse.Implicits._
-
   val key = "akkahashbench"
 
   override def before {
-    conn send flushdb
-    testvals foreach (t => conn ! multiexec(Seq(hmset(t.key, t.toMap), sadd(key, t.key))))
-    assert ((conn send scard(key)) == iterations)
+    conn.sync.flushdb
+    testvals foreach { t =>
+      conn.quiet.hmset(t.key, t.toMap)
+      conn.quiet.sadd(key, t.key)
+    }
+    assert (conn.sync.scard(key) == iterations)
   }
   override def after {
-    conn send flushdb
+    conn.sync.flushdb
   }
 
   val testvals = testvalstream.take(iterations)
 
   def run = {
-    val result = conn send sort8[String, Int, String, String, Int, Int, Double, Double](
+    val result = conn.sync.sort(
       key,
-      get = ("#", "*->rank", "*->text", "*->otext", "*->integer", "*->ointeger", "*->decimal", "*->odecimal"),
+      get = Seq("#", "*->rank", "*->text", "*->otext", "*->integer", "*->ointeger", "*->decimal", "*->odecimal"),
       by = Some("*->rank"),
-      limit = Some((0, 100))) map { _.flatMap{
+      limit = Limit(0, 100)).parse[String, Int, String, String, Int, Int, Double, Double] flatMap {
         case (Some(k), Some(r), Some(t), ot, Some(i), oi, Some(d), od) => Some(TestData(k, r, t, ot, i, oi, d, od))
         case _ => None
-    }} getOrElse (Stream.empty)
-    assert (result.take(10).force == testvals.take(10).force)
+    }
+    assert (result == testvals.take(100).force)
   }
 }
 
-*/
