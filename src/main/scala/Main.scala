@@ -65,7 +65,7 @@ object Clients {
   implicit val redisClient: RedisClient = new RedisClient(ioManager = akka.actor.Actor.actorOf(new akka.actor.IOManager(128000)).start)
 
   def stop {
-    akka.actor.Actor.registry.local.shutdownAll
+    akka.actor.Actor.registry.shutdownAll
   }
 }
 

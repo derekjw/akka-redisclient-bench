@@ -1,12 +1,14 @@
 
 
-scalaVersion := "2.9.0"
+scalaVersion := "2.9.1"
 
 name := "fyrie-redis-bench"
 
 organization := "net.fyrie"
 
-version := "2.0-SNAPSHOT"
+version := "1.2-SNAPSHOT"
 
-libraryDependencies ++= Seq("net.fyrie" %% "fyrie-redis" % "2.0-SNAPSHOT" % "compile")
+resolvers += "snapshots" at "http://repo.fyrie.net/snapshots"
+
+libraryDependencies += "net.fyrie" %% "fyrie-redis" % "1.2-SNAPSHOT"
 
